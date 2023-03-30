@@ -223,4 +223,12 @@ class Utils:
             for array in tohlcv:
                 out.append(array[begin: end + 1])
             return out
+        
+    @staticmethod
+    def sliceDic(dic, keys, begin, end):
+        arrays = []
+        for key in keys:
+            d = dic[key]
+            arrays.append(d[begin: end + 1])
+        return arrays
     

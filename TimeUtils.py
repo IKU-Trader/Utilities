@@ -34,6 +34,17 @@ class TimeUtils:
         return out
     
     @staticmethod
+    def str2pytime(time_str: str, tzinfo, form='%Y-%m-%d %H:%M:%S'):
+        i = time_str.find('+')
+        if i > 0:
+            s = time_str[:i]
+        else:
+            s = time_str
+        t = datetime.strptime(s, form)
+        t = TimeUtils.pyTime(t.year, t.month, t.day, t.hour, t.minute, t.second, tzinfo)
+        return t
+        
+    @staticmethod
     def dayOfLastSunday(year, month):
         '''dow: Monday(0) - Sunday(6)'''
         dow = 6
@@ -121,5 +132,24 @@ class TimeUtils:
     @staticmethod        
     def numpyDateTime2pyDatetime(np_time):
         py_time = datetime.fromtimestamp(np_time.astype(datetime) * 1e-9)
-        return py_time    
+        return py_time
+    
+    @staticmethod                
+    def sliceTime(pytime_array: list, time_from, time_to):
+        begin = None
+        end = None
+        for i in range(len(pytime_array)):
+            t = pytime_array[i]
+            if begin is None:
+                if t >= time_from:
+                    begin = i
+            else:
+                if t > time_to:
+                    end = i
+                    return (end - begin + 1, begin, end)
+        if begin is not None:
+            end = len(pytime_array) - 1
+            return (end - begin + 1, begin, end)
+        else:
+            return (0, None, None)
     

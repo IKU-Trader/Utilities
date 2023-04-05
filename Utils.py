@@ -113,26 +113,6 @@ class Utils:
         for key, array in zip(keys, arrays):
             out[key] = array[:-1]
         return out        
-
-    @staticmethod        
-    def sliceDic(dic, begin, end):
-        keys = list(dic.keys())
-        arrays = []
-        for key in keys:
-            arrays.append(dic[key])
-        out = {}
-        for key, array in zip(keys, arrays):
-            out[key] = array[begin: end + 1]
-        return out
-    
-    @staticmethod
-    def sliceDicLast(dic, size):
-        keys = list(dic.keys())
-        n = len(dic[keys[0]])
-        begin = n - size
-        if begin < 0:
-            begin = 0
-        return Utils.sliceDic(dic, begin, n - 1)
     
     @staticmethod            
     def dic2Arrays(dic):
@@ -224,11 +204,62 @@ class Utils:
                 out.append(array[begin: end + 1])
             return out
         
+    @staticmethod        
+    def sliceDic(dic, begin, end):
+        keys = list(dic.keys())
+        arrays = []
+        for key in keys:
+            arrays.append(dic[key])
+        out = {}
+        for key, array in zip(keys, arrays):
+            out[key] = array[begin: end + 1]
+        return out
+    
     @staticmethod
-    def sliceDic(dic, keys, begin, end):
+    def sliceDicLast(dic, size):
+        keys = list(dic.keys())
+        n = len(dic[keys[0]])
+        begin = n - size
+        if begin < 0:
+            begin = 0
+        return Utils.sliceDic(dic, begin, n - 1)
+        
+    @staticmethod
+    def sliceDicWithKeys(dic, begin, end, keys):
+        out = {}
+        for key in keys:
+            d = dic[key]
+            out[key] = d[begin: end + 1]
+        return out
+    
+    @staticmethod
+    def sliceDic2Array(dic, begin, end, keys):
         arrays = []
         for key in keys:
             d = dic[key]
             arrays.append(d[begin: end + 1])
         return arrays
+    
+    @staticmethod 
+    def saveArrays(filepath, arrays):
+        l = None
+        for array in arrays:
+            if l == None:
+                l = len(array)
+            else:
+                if l != len(array):
+                    print('Bad array length')
+                    return       
+        f = open(filepath, mode='w', encoding='sjis')
+        for j in range(l):
+            s = ''
+            for array in arrays:
+                s += str(array[j]) + ','
+            s = s[:-1]
+            f.write(s + '\n')
+        f.close()
+                    
+        
+    
+        
     

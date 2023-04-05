@@ -17,52 +17,26 @@ from const import const
 from TimeUtils import TimeUtils
 
 from Utils import Utils
-from STA import TechnicalAnalysis as ta
+from Converter import Converter
+from TA import TechnicalAnalysis as ta
 from MathArray import MathArray
+    
+# -----
 
 class DataBuffer:
     # tohlcv: arrays ( time array, open array, ...)
     def __init__(self, tohlcv: list, ta_params: list, is_last_invalid=True):
         self.ta_params = ta_params
-        dic, candle = self.tohlcvArrays2dic(tohlcv, is_last_invalid)        
+        dic, candle = Converter.tohlcvArrays2dic(tohlcv, is_last_invalid)        
         self.addIndicators(dic)
         self.dic = dic
         self.invalid_candle = candle
-        
-    def tohlcvArrays2dic(self, tohlcv: list, is_last_invalid):
-        dic = {}
-        if is_last_invalid:
-            dic[const.TIME] = tohlcv[0][:-1]
-            dic[const.OPEN] = tohlcv[1][:-1]
-            dic[const.HIGH] = tohlcv[2][:-1]
-            dic[const.LOW] = tohlcv[3][:-1]
-            dic[const.CLOSE] = tohlcv[4][:-1]
-            if len(tohlcv) > 5:
-                dic[const.VOLUME] = tohlcv[5][:-1]
-            candle = [tohlcv[0][-1], tohlcv[1][-1], tohlcv[2][-1],tohlcv[3][-1], tohlcv[4][-1]]
-            if len(tohlcv) > 5:
-                candle.append(tohlcv[5][-1])
-            return dic, candle
-        else:
-            dic = self.arrays2Dic(tohlcv)
-            return dic, []
-        
-    def arrays2Dic(self, tohlcvArrays: list):
-        dic = {}
-        dic[const.TIME] = tohlcvArrays[0]
-        dic[const.OPEN] = tohlcvArrays[1]
-        dic[const.HIGH] = tohlcvArrays[2]
-        dic[const.LOW] = tohlcvArrays[3]
-        dic[const.CLOSE] = tohlcvArrays[4]
-        if len(tohlcvArrays) > 5:
-            dic[const.VOLUME] = tohlcvArrays[5]
-        return dic
                                 
     def tohlcvDic(self):
         return self.dic
     
     def candles(self):
-        return self.dic2Candles(self.dic)
+        return Converter.dic2Candles(self.dic)
     
     def tohlcvArrays(self):
         return Utils.dic2Arrays(self.dic)
@@ -147,44 +121,13 @@ class DataBuffer:
             except:
                 array += blank.copy()
         return
-
-    def arrays2Candles(self, tohlcvArrays: list):
-        out = []
-        n = len(tohlcvArrays[0])
-        for i in range(n):
-            d = [array[i] for array in tohlcvArrays]
-            out.append(d)
-        return out
-
-    def candles2Arrays(self, candles: list):
-        n = len(candles)
-        m = len(candles[0])
-        arrays = []
-        for i in range(m):
-            array = [candles[j][i] for j in range(n)]
-            arrays.append(array)
-        return arrays
-
-    def dic2Candles(self, dic: dict):
-        arrays = [dic[const.TIME], dic[const.OPEN], dic[const.HIGH], dic[const.LOW], dic[const.CLOSE]]
-        try:
-            arrays.append(dic[const.VOLUME])
-        except:
-            pass
-        out = []
-        for i in range(len(arrays[0])):
-            d = [] 
-            for array in arrays:
-                d.append(array[i])
-            out.append(d)
-        return out
             
 # -----
 
 class ResampleDataBuffer(DataBuffer):
     # tohlcv: arrays ( time array, open array, ...)
     def __init__(self, tohlcv: list, ta_params: list, interval_minutes: int):
-        tohlcv_arrays, tmp_candles = self.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
+        tohlcv_arrays, tmp_candles = Converter.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
         super().__init__(tohlcv_arrays, ta_params, False)
         self.interval_minutes = interval_minutes
         self.tmp_candles = tmp_candles
@@ -210,10 +153,10 @@ class ResampleDataBuffer(DataBuffer):
             t = candle[0]
             if t <= last_time:
                 continue
-            t_round =  self.roundTime(t, self.interval_minutes, const.UNIT_MINUTE)
+            t_round =  Converter.roundTime(t, self.interval_minutes, const.UNIT_MINUTE)
             if t == t_round:    
                 tmp_candles.append(candle)
-                c = self.candlePrice(t_round, tmp_candles)
+                c = Converter.candlePrice(t_round, tmp_candles)
                 new_candles.append(c)
                 tmp_candles = []
             else:
@@ -231,84 +174,11 @@ class ResampleDataBuffer(DataBuffer):
         if len(tmp_candles) == 0:
             return self.dic[const.TIME][-1], self.dic.copy()
         t = tmp_candles[-1][0]
-        t_round =  self.roundTime(t, self.interval_minutes, const.UNIT_MINUTE)
-        new_candle = self.candlePrice(t_round, tmp_candles)
+        t_round =  Converter.roundTime(t, self.interval_minutes, const.UNIT_MINUTE)
+        new_candle = Converter.candlePrice(t_round, tmp_candles)
         tmp_dic = copy.deepcopy(self.dic)
         begin = len(tmp_dic[const.TIME])
         self.merge(tmp_dic, [new_candle])        
         end = len(tmp_dic[const.TIME]) - 1
         self.updateSeqIndicator(tmp_dic, begin, end)
         return tmp_candles[-1][0], tmp_dic
-    
-    # tohlcv: tohlcv arrays
-    def resample(self, tohlcv: list, interval: int, unit: const.TimeUnit):        
-        time = tohlcv[0]
-        n = len(time)
-        op = tohlcv[1]
-        hi = tohlcv[2]
-        lo = tohlcv[3]
-        cl = tohlcv[4]
-        if len(tohlcv) > 5:
-            vo = tohlcv[5]
-            is_volume = True
-        else:
-            is_volume = False
-        data_list = []
-        candles = []
-        current_time = None
-        for i in range(n):
-            t_round = self.roundTime(time[i], interval, unit)
-            if is_volume:
-                values = [time[i], op[i], hi[i], lo[i], cl[i], vo[i]]
-            else:
-                values = [time[i], op[i], hi[i], lo[i], cl[i]]
-            if current_time is None:
-                current_time = t_round
-                data_list = [values]
-            else:
-                if t_round == current_time:
-                    data_list.append(values)
-                else:
-                    candle = self.candlePrice(current_time, data_list)
-                    candles.append(candle)
-                    data_list = [values]
-                    current_time = t_round
-        if len(data_list) == interval:
-            candle = self.candlePrice(current_time, data_list)
-            candles.append(candle)
-            data_list = []
-        return self.candles2Arrays(candles), data_list
-    
-    def roundTime(self, time: datetime, interval: int, unit: const.TimeUnit):
-        zone = time.tzinfo
-        if unit == const.UNIT_MINUTE:
-            t = datetime(time.year, time.month, time.day, time.hour, 0, 0, tzinfo=zone)
-        elif unit == const.UNIT_HOUR:
-            t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
-        elif unit == const.UNIT_DAY:
-            t = datetime(time.year, time.month, time.day, 0, 0, 0, tzinfo=zone)
-            return t
-        if t == time:
-            return t
-        while t < time:
-            if unit == const.UNIT_MINUTE:
-                t += timedelta(minutes=interval)
-            elif unit == const.UNIT_HOUR:
-                t += timedelta(hours=interval)
-        return t
-
-    def candlePrice(self, time:datetime, tohlcv_list:[]):
-        m = len(tohlcv_list[0])
-        n = len(tohlcv_list)
-        o = tohlcv_list[0][1]
-        c = tohlcv_list[-1][4]
-        h_array = [tohlcv_list[i][2] for i in range(n)]
-        h = max(h_array)
-        l_array = [tohlcv_list[i][3] for i in range(n)]
-        l = min(l_array)
-        if m > 5:
-            v_array = [tohlcv_list[i][5] for i in range(n)]
-            v = sum(v_array)
-            return [time, o, h, l, c, v]
-        else:
-            return [time, o, h, l, c]    

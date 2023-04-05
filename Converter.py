@@ -93,7 +93,6 @@ class Converter:
             is_volume = False
         data_list = []
         candles = []
-        t_round_old = None
         for i in range(n):
             if is_volume:
                 values = [time[i], op[i], hi[i], lo[i], cl[i], vo[i]]
@@ -101,18 +100,14 @@ class Converter:
                 values = [time[i], op[i], hi[i], lo[i], cl[i]]
             t_round = Converter.roundTime(time[i], interval, unit)
             if time[i] == t_round:
-                if t_round_old is None:
-                    data_list = [values]
-                if len(data_list) > 0:
-                    candle = Converter.candlePrice(time[i], data_list)
-                    candles.append(candle)
-                t_round_old = t_round
+                data_list.append(values)
+                candle = Converter.candlePrice(time[i], data_list)
+                candles.append(candle)
                 data_list = []
             elif time[i] < t_round:
                 data_list.append(values)
             elif time[i] > t_round:
                 data_list = []
-                t_round_old = None
         return Converter.candles2Arrays(candles), data_list
     
     @staticmethod

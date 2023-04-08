@@ -66,8 +66,10 @@ class DataBuffer:
         return dic
 
     def updateSeqIndicator(self, dic: dict, begin: int, end: int):
-        for name, [key, param] in self.ta_params.items():
-            ta.seqIndicator(dic, key, begin, end, param, name=name)
+        for ta_param in self.ta_params:
+            for name, [key, param] in ta_param:
+                ta.indicator(dic, key, param, name)
+                ta.seqIndicator(dic, key, begin, end, param, name=name)
         return dic
     
     # dic: tohlcv+ array dict
@@ -127,6 +129,8 @@ class DataBuffer:
 class ResampleDataBuffer(DataBuffer):
     # tohlcv: arrays ( time array, open array, ...)
     def __init__(self, tohlcv: list, ta_params: list, interval_minutes: int):
+        if interval_minutes > 60:
+            raise Exception('Bad interval_minutes')
         tohlcv_arrays, tmp_candles = Converter.resample(tohlcv, interval_minutes, const.UNIT_MINUTE)
         super().__init__(tohlcv_arrays, ta_params, False)
         self.interval_minutes = interval_minutes

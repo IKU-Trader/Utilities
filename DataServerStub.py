@@ -68,9 +68,12 @@ class DataServerStub:
         tohlcv = self.parseTime(tohlcv, tzinfo)
         self.tohlcv = tohlcv
         
+    def importData(self, tohlcv):
+        self.tohlcv = tohlcv
+        
     def init(self, initial_num:int, step_sec=0):
         if initial_num > self.size():
-            raise Exception('Too large initial_num')
+            raise Exception('Too large initial_num: ' + str(initial_num) + '  data size: ' + str(self.size()))
         self.currentIndex = initial_num - 1
         tohlcv = self.sliceTohlcv(0, self.currentIndex)
         if step_sec == 0:
@@ -87,8 +90,8 @@ class DataServerStub:
         lo = next_tohlcv[3]
         hi = next_tohlcv[2]
         
-        buffer = np.arange(lo, hi + 1, (hi - lo) / (num - 1))
-        np.random.shuffle(buffer)
+        prices = np.linspace(lo, hi, num - 1)
+        np.random.shuffle(prices)
         dummy = []
         o = next_tohlcv[1]
         h = o
@@ -99,9 +102,8 @@ class DataServerStub:
             dv = int(vo / num - 0.5)
         else:
             is_volume = False
-        n = len(buffer)
         sumvol = 0
-        for i, price in enumerate(buffer):
+        for i, price in enumerate(prices):
             if i == 0:
                 h = price
                 l = price
@@ -155,6 +157,14 @@ class DataServerStub:
             return out
         else:
             return None
+        
+    def indexAt(self, time):
+        begin, end = self.timeRange()
+        if time < begin and time > end:
+            return -1
+        for i, t in self.tohlcv[0]:
+            if t >= time:
+                return i
         
     def timeRange(self):
         t0 = self.tohlcv[0][0]

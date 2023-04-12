@@ -42,7 +42,7 @@ class DataBuffer:
         return Utils.dic2Arrays(self.dic)
     
     def size(self):
-        return len(self.dic)
+        return len(self.dic[const.TIME])
     
     def lastTime(self):
         if self.size() > 0:

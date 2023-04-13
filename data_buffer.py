@@ -14,12 +14,12 @@ import numpy as np
 import copy
 from datetime import datetime, timedelta
 from const import const
-from TimeUtils import TimeUtils
+from time_utils import TimeUtils
 
-from Utils import Utils
-from Converter import Converter
-from TA import TechnicalAnalysis as ta
-from MathArray import MathArray
+from utils import Utils
+from converter import Converter
+from technical_analysis import TechnicalAnalysis as ta
+from math_array import MathArray
     
 # -----
 

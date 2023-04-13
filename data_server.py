@@ -9,8 +9,7 @@ import pandas as pd
 import numpy as np
 import glob
 import pytz
-from TimeUtils import TimeUtils
-
+from time_utils import TimeUtils
 
 def fileList(dir_path, extension):
     path = os.path.join(dir_path, '*.' + extension)

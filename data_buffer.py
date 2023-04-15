@@ -18,7 +18,7 @@ from time_utils import TimeUtils
 
 from utils import Utils
 from converter import Converter
-from technical_analysis import TechnicalAnalysis as ta
+from technical_analysis import TA
 from math_array import MathArray
     
 # -----
@@ -62,16 +62,15 @@ class DataBuffer:
     def addIndicators(self, dic: dict):
         for ta_param in self.ta_params:
             method, param, name = ta_param
-            ta.indicator(dic, method, param, name=name)
+            TA.indicator(dic, method, param, name=name)
         return dic
 
     def updateSeqIndicator(self, dic: dict, begin: int, end: int):
         for ta_param in self.ta_params:
-            for name, [key, param] in ta_param:
-                ta.indicator(dic, key, param, name)
-                ta.seqIndicator(dic, key, begin, end, param, name=name)
+            method, param, name = ta_param
+            TA.indicator(dic, method, param, name=name)
+            TA.seqIndicator(dic, method, begin, end, param, name=name)
         return dic
-    
     # dic: tohlcv+ array dict
     def removeLastData(self, dic):
         keys, arrays = Utils.dic2Arrays(dic)

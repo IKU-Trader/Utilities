@@ -126,7 +126,7 @@ class DataServerStub:
         if self.step_num == 0:
             self.currentIndex += 1
             if self.currentIndex > self.size() - 1:
-                return None
+                return [None, None]
             else:
                 return [self.lastValidTohlcv, self.tohlcAt(self.currentIndex)]
         else:

@@ -82,6 +82,7 @@ class DataServerStub:
             self.dummy = self.makeDummy(self.tohlcvAt(self.currentIndex + 1), self.step_num)
         self.step = 0
         self.lastValidTohlcv = self.tohlcvAt(self.currentIndex)
+        print('step sec:', step_sec, 'num:', self.step_num, 'step: ', self.step, 'len(dummy)', len(self.dummy))
         return tohlcv
 
     def makeDummy(self, next_tohlcv, num):
@@ -89,7 +90,7 @@ class DataServerStub:
         lo = next_tohlcv[3]
         hi = next_tohlcv[2]
         
-        prices = np.linspace(lo, hi, num - 1)
+        prices = np.linspace(lo, hi, num)
         np.random.shuffle(prices)
         dummy = []
         o = next_tohlcv[1]
@@ -123,6 +124,7 @@ class DataServerStub:
         return dummy
         
     def nextData(self):        
+        print('next data ... step: ', self.step, 'len(dummy): ', len(self.dummy))
         if self.step_num == 0:
             self.currentIndex += 1
             if self.currentIndex > self.size() - 1:
